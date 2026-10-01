@@ -1,0 +1,16 @@
+{
+  "name": "ton-store",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tact -c tact.config.json",
+    "deploy": "node --experimental-strip-types scripts/deploy.ts"
+  },
+  "dependencies": {
+    "@tact-lang/compiler": "^1.6.13",
+    "@ton/core": "^0.59.0",
+    "@ton/crypto": "^3.3.0",
+    "@ton/ton": "^15.2.1"
+  }
+}

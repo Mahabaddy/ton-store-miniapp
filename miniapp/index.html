@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Qubax Store</title>
+<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; }
+  body { background:#0e0e14; color:#e8e8f0; padding:16px; max-width:480px; margin:0 auto; }
+  h1 { font-size:20px; margin-bottom:2px; }
+  .sub { color:#8888a0; font-size:13px; margin-bottom:16px; }
+  .card { background:#1a1a26; border:1px solid #2a2a3a; border-radius:14px; padding:14px; margin-bottom:12px; }
+  .title { font-weight:600; font-size:15px; }
+  .desc { color:#8888a0; font-size:12px; margin:4px 0 10px; }
+  .price { color:#7ee2a8; font-weight:700; font-size:14px; }
+  .buy { width:100%; padding:10px; border:none; border-radius:10px; background:#3d5afe; color:#fff; font-weight:600; font-size:14px; cursor:pointer; }
+  .buy:disabled { background:#333; color:#666; }
+  #status { font-size:12px; color:#ffd479; margin-top:10px; min-height:16px; }
+  #wallet { font-size:11px; color:#8888a0; word-break:break-all; margin-top:6px; }
+  #tc-root { margin-bottom:14px; }
+</style>
+</head>
+<body>
+  <h1>🧊 Qubax Store</h1>
+  <div class="sub">TON testnet demo — payments go to the Store smart contract</div>
+
+  <div id="tc-root"></div>
+
+  <div class="card">
+    <div class="title">📦 Tool License — Basic</div>
+    <div class="desc">Unlocks the demo tool. Paid on-chain, recorded by the Store contract.</div>
+    <div class="price">0.05 TON (testnet)</div><br>
+    <button class="buy" id="buy1">Buy — pay 0.05 TON</button>
+  </div>
+
+  <div class="card">
+    <div class="title">📦 Tool License — Pro</div>
+    <div class="desc">Everything in Basic, plus priority queue. Recorded on-chain.</div>
+    <div class="price">0.10 TON (testnet)</div><br>
+    <button class="buy" id="buy2">Buy — pay 0.10 TON</button>
+  </div>
+
+  <div id="wallet">wallet: not connected</div>
+  <div id="status"></div>
+
+<script>
+const STORE = 'EQA31CWYIcZnBxDlMJUvlLwECP37xZkxYs16Xf4fuGrZoHxd';
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+
+const tcUI = new TON_CONNECT_UI.TonConnectUI({
+  manifestUrl: 'https://mahabaddy.github.io/ton-store-miniapp/miniapp/tonconnect-manifest.json',
+  buttonRootId: 'tc-root'
+});
+
+tcUI.onStatusChange(w => {
+  document.getElementById('wallet').textContent =
+    w ? 'wallet: ' + w.account.address.slice(0,12) + '…' + w.account.address.slice(-8)
+      : 'wallet: not connected';
+});
+
+async function buy(tonAmount, label) {
+  const status = document.getElementById('status');
+  const w = tcUI.wallet;
+  if (!w) { status.textContent = 'Connect your wallet first ↑'; return; }
+  status.textContent = 'Opening wallet to confirm ' + label + '…';
+  try {
+    // plain transfer, no body = Store.receive() deposit, contract counts it
+    const tx = { validUntil: Math.floor(Date.now()/1000) + 300,
+                 messages: [{ address: STORE, amount: String(Math.round(tonAmount*1e9)) }] };
+    await tcUI.sendTransaction(tx);
+    status.textContent = '✅ Sent! The Store contract records your deposit. Bot can now verify it on-chain.';
+  } catch (e) {
+    status.textContent = e && e.message ? '❌ ' + e.message : '❌ cancelled';
+  }
+}
+document.getElementById('buy1').onclick = () => buy(0.05, 'Basic');
+document.getElementById('buy2').onclick = () => buy(0.10, 'Pro');
+</script>
+</body>
+</html>
