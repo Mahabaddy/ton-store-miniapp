@@ -11,7 +11,7 @@ import sys
 from telethon import TelegramClient, events
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.dirname(HERE))  # telegram-bridge root for common.py
+sys.path.insert(0, os.path.join(os.path.dirname(HERE), "telegram-bridge"))  # for common.py
 from common import get_client  # noqa: E402
 
 OUT = os.path.join(HERE, "bot_credentials.json")
@@ -24,7 +24,7 @@ async def main() -> None:
     me = await client.get_me()
     print(f"logged in as: {me.first_name} (@{me.username}) id={me.id}")
 
-    botfather = 93372553
+    botfather = await client.get_entity("BotFather")
     result = {"created": False}
 
     @client.on(events.NewMessage(chats=botfather, incoming=True))
@@ -41,18 +41,14 @@ async def main() -> None:
         except asyncio.TimeoutError:
             return ""
 
-    await client.send_message(botfather, "/mybots")
-    r = await wait_reply()
-    print("BF:", (r or "(timeout)").replace("\n", " | ")[:200])
-
-    if "Create a new bot" not in r and "new bot" not in r.lower():
-        print("unexpected reply; aborting")
-        await client.disconnect()
-        sys.exit(1)
-
     await client.send_message(botfather, "/newbot")
     r = await wait_reply()
     print("BF:", (r or "(timeout)").replace("\n", " | ")[:160])
+
+    if "name" not in r.lower():
+        print("unexpected reply to /newbot; aborting")
+        await client.disconnect()
+        sys.exit(1)
 
     await client.send_message(botfather, "Qubax Store Test")
     r = await wait_reply()

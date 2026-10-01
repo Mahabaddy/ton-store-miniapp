@@ -3,3 +3,6 @@ build/
 secrets/
 *.log
 .env
+bot_credentials.json
+icon.png
+scripts/*.bundle.cjs
